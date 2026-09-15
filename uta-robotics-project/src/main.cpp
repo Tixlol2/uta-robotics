@@ -55,6 +55,8 @@
 #include "tap/communication/serial/remote.hpp"
 #include "tap/communication/serial/terminal_serial.hpp"
 
+#include "subsystems/chassis_subsystem.hpp"
+
 
 
 /* define timers here -------------------------------------------------------*/
@@ -113,6 +115,20 @@ int main()
     Board::initialize();
     initializeIo(drivers);
 
+    control::chassis::ChassisSubsystem chassis(
+        drivers,
+        tap::motor::MotorId::MOTOR1,
+        tap::motor::MotorId::MOTOR2,
+        tap::motor::MotorId::MOTOR3,
+        tap::motor::MotorId::MOTOR4,
+        tap::can::CanBus::CAN_BUS1,
+        0.0762f,  // wheel radius in meters
+        0.254f,   // wheelbase radius in meters
+        {0.1f, 0.001f, 0.0f, 100.0f, 100.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f}
+        //Kp, Ki, Kd, maxICumulative, maxOutput, tQDerivativeKalman, tRDerivativeKalman, tQProportionalKalman, tRProportionalKalman, errDeadzone, errorDerivativeFloor
+    );
+    drivers->commandScheduler.registerSubsystem(&chassis);
+
 #ifdef PLATFORM_HOSTED
     tap::motor::motorsim::DjiMotorSimHandler::getInstance()->resetMotorSims();
     // Blocking call, waits until Windows Simulator connects.
@@ -158,13 +174,6 @@ static void initializeIo(src::Drivers *drivers)
     drivers->terminalSerial.initialize();
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
-
-    
-
-
-
-    
-    
 
     
 
