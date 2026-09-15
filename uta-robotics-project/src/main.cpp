@@ -55,9 +55,7 @@
 #include "tap/communication/serial/remote.hpp"
 #include "tap/communication/serial/terminal_serial.hpp"
 
-#include "commands/led_off_command.hpp"
-#include "commands/led_on_command.hpp"
-#include "subsystems/led_subsystem.hpp"
+
 
 /* define timers here -------------------------------------------------------*/
 static constexpr float MAIN_LOOP_FREQUENCY = 500.0f;
@@ -161,27 +159,11 @@ static void initializeIo(src::Drivers *drivers)
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
 
-    static LedSubsystem ledSubsystem(drivers);
-    static LedOnCommand ledOnCommand(ledSubsystem, tap::gpio::Leds::Green);
-    static LedOffCommand ledOffCommand(ledSubsystem, tap::gpio::Leds::Green);
+    
 
-    static tap::control::HoldCommandMapping lightOn(
-        drivers,
-        {&ledOnCommand},
-        tap::control::RemoteMapState(
-            tap::communication::serial::Remote::Switch::RIGHT_SWITCH,
-            tap::communication::serial::Remote::SwitchState::UP));
 
-    static tap::control::HoldCommandMapping lightOff(
-        drivers,
-        {&ledOffCommand},
-        tap::control::RemoteMapState(
-            tap::communication::serial::Remote::Switch::RIGHT_SWITCH,
-            tap::communication::serial::Remote::SwitchState::DOWN));
 
-    drivers->commandScheduler.registerSubsystem(&ledSubsystem);
-    drivers->commandMapper.addMap(&lightOff);
-    drivers->commandMapper.addMap(&lightOn);
+    
     
 
     
