@@ -56,7 +56,7 @@
 #include "tap/communication/serial/terminal_serial.hpp"
 
 #include "subsystems/chassis_subsystem.hpp"
-
+#include "subsystems/chassis_drive_command.hpp"
 
 
 /* define timers here -------------------------------------------------------*/
@@ -71,6 +71,7 @@ static void initializeIo(src::Drivers *drivers);
 // very frequently. Use PeriodicMilliTimers if you don't want something to be
 // called as frequently.
 static void updateIo(src::Drivers *drivers);
+
 
 class RemoteDebugHandler
     : public tap::communication::serial::TerminalSerialCallbackInterface
@@ -94,6 +95,8 @@ public:
         terminalSerialCallback(nullptr, output, true);
     }
 
+    
+
 private:
     src::Drivers *drivers;
 };
@@ -111,23 +114,36 @@ int main()
      */
     src::Drivers *drivers = src::DoNotUse_getDrivers();
     
+    
 
     Board::initialize();
     initializeIo(drivers);
-
+    
+    // 1. Construct the subsystem itself.
     control::chassis::ChassisSubsystem chassis(
         drivers,
-        tap::motor::MotorId::MOTOR1,
-        tap::motor::MotorId::MOTOR2,
-        tap::motor::MotorId::MOTOR3,
-        tap::motor::MotorId::MOTOR4,
-        tap::can::CanBus::CAN_BUS1,
-        0.0762f,  // wheel radius in meters
-        0.254f,   // wheelbase radius in meters
-        {0.1f, 0.001f, 0.0f, 100.0f, 100.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f}
-        //Kp, Ki, Kd, maxICumulative, maxOutput, tQDerivativeKalman, tRDerivativeKalman, tQProportionalKalman, tRProportionalKalman, errDeadzone, errorDerivativeFloor
-    );
-    drivers->commandScheduler.registerSubsystem(&chassis);
+        tap::motor::MotorId::MOTOR1,   // LF
+        tap::motor::MotorId::MOTOR2,   // RF
+        tap::motor::MotorId::MOTOR4,   // LB
+        tap::motor::MotorId::MOTOR3,   // RB
+        tap::can::CanBus::CAN_BUS2,
+        0.0762f,   // wheel radius (m)
+        0.254f,    // wheelbase radius (m)
+        {0.5f, 0.001f, 0.0f, 100.0f, 16000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f});
+        // Kp, Ki, Kd, maxICumulative, maxOutput, tQDerivativeKalman,
+        // tRDerivativeKalman, tQProportionalKalman, tRProportionalKalman,
+        // errDeadzone, errorDerivativeFloor
+
+    // 2. Register it with the scheduler so refresh() gets called each tick.
+    chassis.registerAndInitialize();
+
+    // 3. Construct the drive command — needs `chassis` to already exist.
+    control::chassis::ChassisDriveCommand chassisDriveCommand(drivers, &chassis);
+
+    // 4. Set it as the subsystem's default command.
+    chassis.setDefaultCommand(&chassisDriveCommand);
+    
+    
 
 #ifdef PLATFORM_HOSTED
     tap::motor::motorsim::DjiMotorSimHandler::getInstance()->resetMotorSims();
@@ -135,11 +151,19 @@ int main()
     tap::communication::TCPServer::MainServer()->getConnection();
 #endif
 
+
+
     while (1)
     {
+        #ifdef TARGET_STANDARD
+        #endif
+
+        
+
         // do this as fast as you can
         PROFILE(drivers->profiler, updateIo, (drivers));
 
+        
         if (sendMotorTimeout.execute())
         {
             // PROFILE(drivers->profiler, drivers->mpu6500.periodicIMUUpdate, ()); // only for type
@@ -174,11 +198,9 @@ static void initializeIo(src::Drivers *drivers)
     drivers->terminalSerial.initialize();
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
-
-    
-
     static RemoteDebugHandler remoteDebugHandler(drivers);
     drivers->terminalSerial.addHeader("remote", &remoteDebugHandler);
+    
 }
 
 

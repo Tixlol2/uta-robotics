@@ -102,6 +102,13 @@ public:
      */
     void setDesiredOutput(float x, float y, float r);
 
+    /**
+     * Sets values for the desired chassis velocity, but does not run the kinematics.
+     * Instead, values are directyl set via the controller's channels multiplied
+     * by the maximum translational and rotational speeds.
+     */
+    void setRoughDrive(float x, float y, float r);
+
     /// Zeros the desired wheel RPMs (does not disable the motors).
     void setZeroRPM();
 

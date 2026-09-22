@@ -26,6 +26,7 @@ ChassisSubsystem::ChassisSubsystem(
     float wheelRadius,
     float wheelbaseRadius,
     const tap::algorithms::SmoothPidConfig& velocityPidConfig)
+
     : tap::control::Subsystem(drivers),
       drivers(drivers),
       motors{
@@ -105,13 +106,24 @@ void ChassisSubsystem::refresh()
     const float dt = static_cast<float>(now - lastUpdateTimeMs) / 1000.0f;
     lastUpdateTimeMs = now;
 
+    drivers->leds.set(drivers->leds.Green, !allMotorsOnline() && !drivers->remote.getChannel(tap::communication::serial::Remote::Channel::LEFT_VERTICAL) < 0.1f);
+    
+
     for (int i = 0; i < getNumChassisMotors(); i++)
     {
         const float measuredRpm = static_cast<float>(motors[i].getShaftRPM());
         const float error = desiredWheelRpm[i][0] - measuredRpm;
         const float pidOutput = velocityPid[i].runControllerDerivateError(error, dt);
-        motors[i].setDesiredOutput(static_cast<int32_t>(pidOutput));
+        motors[i].setDesiredOutput(pidOutput);
     }
+}
+
+void ChassisSubsystem::setRoughDrive(float x, float y, float r)
+{
+    desiredWheelRpm[LF][0] = x;
+    desiredWheelRpm[RF][0] = y;
+    desiredWheelRpm[LB][0] = r;
+    desiredWheelRpm[RB][0] = r;
 }
 
 void ChassisSubsystem::refreshSafeDisconnect()
