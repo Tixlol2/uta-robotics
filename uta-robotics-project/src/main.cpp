@@ -51,12 +51,14 @@
 #include "tap/control/command_mapper.hpp"
 #include "tap/control/hold_command_mapping.hpp"
 #include "tap/control/toggle_command_mapping.hpp"
+#include "tap/control/toggle_command_mapping.hpp"
 #include "tap/control/remote_map_state.hpp"
 #include "tap/communication/serial/remote.hpp"
 #include "tap/communication/serial/terminal_serial.hpp"
 
-#include "subsystems/chassis_subsystem.hpp"
-#include "subsystems/chassis_drive_command.hpp"
+#include "subsystems/chassis/chassis_subsystem.hpp"
+#include "subsystems/chassis/chassis_drive_command.hpp"
+#include "subsystems/chassis/chassis_beyblade_command.hpp"
 
 
 /* define timers here -------------------------------------------------------*/
@@ -119,7 +121,7 @@ int main()
     Board::initialize();
     initializeIo(drivers);
     
-    // 1. Construct the subsystem itself.
+    
     control::chassis::ChassisSubsystem chassis(
         drivers,
         tap::motor::MotorId::MOTOR1,   // LF
@@ -134,14 +136,28 @@ int main()
         // tRDerivativeKalman, tQProportionalKalman, tRProportionalKalman,
         // errDeadzone, errorDerivativeFloor
 
-    // 2. Register it with the scheduler so refresh() gets called each tick.
+    
     chassis.registerAndInitialize();
 
-    // 3. Construct the drive command — needs `chassis` to already exist.
+    
     control::chassis::ChassisDriveCommand chassisDriveCommand(drivers, &chassis);
 
-    // 4. Set it as the subsystem's default command.
+    
     chassis.setDefaultCommand(&chassisDriveCommand);
+    
+    // Beyblade command — scheduled only while toggled on
+    control::chassis::ChassisBeybladeCommand chassisBeybladeCommand(drivers, &chassis);
+
+    tap::control::RemoteMapState rightSwitchUp(
+        tap::communication::serial::Remote::Switch::RIGHT_SWITCH,
+        tap::communication::serial::Remote::SwitchState::UP);
+
+    tap::control::HoldCommandMapping beybladeToggle(
+        drivers,
+        {&chassisBeybladeCommand},
+        rightSwitchUp);
+
+    drivers->commandMapper.addMap(&beybladeToggle);
     
     
 
