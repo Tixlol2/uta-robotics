@@ -46,10 +46,10 @@ public:
 
 private:
     /// Wheel RPM commanded when a translation stick is at full deflection.
-    static constexpr float MAX_TRANSLATIONAL_SPEED_RPM = 8000.0f;
+    static constexpr float MAX_TRANSLATIONAL_SPEED_RPM = 6000.0f;
 
     /// Wheel RPM commanded when the rotation stick is at full deflection.
-    static constexpr float MAX_ROTATIONAL_SPEED_RPM = 4000.0f;
+    static constexpr float MAX_ROTATIONAL_SPEED_RPM = 3000.0f;
 
     tap::Drivers* drivers;
     ChassisSubsystem* chassis;

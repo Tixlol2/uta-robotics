@@ -131,7 +131,7 @@ int main()
         tap::can::CanBus::CAN_BUS2,
         0.0762f,   // wheel radius (m)
         0.254f,    // wheelbase radius (m)
-        {0.5f, 0.001f, 0.0f, 100.0f, 16000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f});
+        {0.4f, 0.01f, 0.0f, 100.0f, 8000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f});
         // Kp, Ki, Kd, maxICumulative, maxOutput, tQDerivativeKalman,
         // tRDerivativeKalman, tQProportionalKalman, tRProportionalKalman,
         // errDeadzone, errorDerivativeFloor
