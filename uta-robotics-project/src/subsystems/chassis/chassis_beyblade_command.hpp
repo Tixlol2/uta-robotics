@@ -4,6 +4,7 @@
 #include "tap/communication/serial/remote.hpp"
 #include "tap/control/command.hpp"
 
+#include "chassis_field_relative_math.hpp"
 #include "chassis_subsystem.hpp"
 
 namespace tap
@@ -24,11 +25,14 @@ namespace control::chassis
  * via a ToggleCommandMapping (see main.cpp). When untoggled, the chassis
  * subsystem automatically falls back to its default command.
  *
- * Note: translation here is chassis-relative, so as the chassis spins, the
- * "forward" direction of the sticks spins along with it. That's expected
- * for a basic beyblade. Making translation field-relative while spinning
- * would require compensating the x/y command with IMU yaw, which this
- * command does not do.
+ * Translation is field-relative: the right stick's x/y is interpreted as a
+ * direction relative to the field (specifically, relative to whatever
+ * heading the chassis had when the IMU's yaw reference was last zeroed),
+ * not relative to the chassis's own (constantly spinning) body frame. The
+ * stick command is rotated by the chassis's current IMU yaw every tick
+ * before being handed to ChassisSubsystem::setDesiredOutput, so holding the
+ * stick in one direction moves the robot in a straight line across the
+ * field regardless of how the chassis is currently oriented mid-spin.
  */
 class ChassisBeybladeCommand : public tap::control::Command
 {
@@ -47,10 +51,12 @@ public:
 
 private:
     /// Constant wheel RPM commanded for chassis rotation while beyblading.
-    
+    /// Tune this for your robot's desired spin rate.
     static constexpr float BEYBLADE_ROTATION_RPM = 3000.0f;
 
     /// Wheel RPM commanded when a translation stick is at full deflection
+    /// while beyblading. Kept lower than ChassisDriveCommand's translation
+    /// authority so the chassis stays controllable while spinning.
     static constexpr float BEYBLADE_TRANSLATIONAL_SPEED_RPM = 2000.0f;
 
     tap::Drivers* drivers;

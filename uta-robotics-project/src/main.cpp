@@ -131,7 +131,7 @@ int main()
         tap::can::CanBus::CAN_BUS2,
         0.0762f,   // wheel radius (m)
         0.254f,    // wheelbase radius (m)
-        {0.4f, 0.01f, 0.0f, 100.0f, 8000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f});
+        {0.5f, 0.001f, 0.0f, 100.0f, 8000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 75.0f, 0.0f});
         // Kp, Ki, Kd, maxICumulative, maxOutput, tQDerivativeKalman,
         // tRDerivativeKalman, tQProportionalKalman, tRProportionalKalman,
         // errDeadzone, errorDerivativeFloor
@@ -209,6 +209,7 @@ static void initializeIo(src::Drivers *drivers)
     // ki compensates for drift over minutes, imu drifts -> start at 0.001, then increase as needed
     // drivers->mpu6500.init(MAIN_LOOP_FREQUENCY, 0.1, 0);
     drivers->bmi088.initialize(MAIN_LOOP_FREQUENCY, 0.1, 0);
+    
     drivers->bmi088.requestRecalibration();
     drivers->refSerial.initialize();
     drivers->terminalSerial.initialize();

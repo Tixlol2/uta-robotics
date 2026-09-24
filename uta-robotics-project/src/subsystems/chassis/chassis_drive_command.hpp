@@ -4,6 +4,7 @@
 #include "tap/communication/serial/remote.hpp"
 #include "tap/control/command.hpp"
 
+#include "chassis_field_relative_math.hpp"
 #include "chassis_subsystem.hpp"
 
 namespace tap
@@ -24,9 +25,18 @@ namespace control::chassis
  *  - Right stick horizontal -> y (left/right strafe)
  *  - Left stick horizontal  -> r (rotation)
  *
+ * Translation is field-relative: the right stick's x/y is interpreted as a
+ * direction relative to the field (i.e. relative to whatever heading the
+ * chassis had when the IMU's yaw reference was last zeroed), not relative
+ * to the chassis's own body frame. It's rotated by the chassis's current
+ * IMU yaw every tick before reaching ChassisSubsystem::setDesiredOutput, so
+ * "stick forward" always drives the same field direction even after the
+ * chassis has turned to face a different way. Rotation (r) is unaffected --
+ * angular velocity commands don't need a frame conversion.
+ *
  * This command never finishes on its own; schedule it as the chassis
  * subsystem's default command so the chassis is always under operator
- * control unless some other command (e.g. autoaim, autorotate) takes over
+ * control unless some other command (e.g. autoaim, beyblade) takes over
  * the subsystem.
  */
 class ChassisDriveCommand : public tap::control::Command
@@ -49,7 +59,7 @@ private:
     static constexpr float MAX_TRANSLATIONAL_SPEED_RPM = 6000.0f;
 
     /// Wheel RPM commanded when the rotation stick is at full deflection.
-    static constexpr float MAX_ROTATIONAL_SPEED_RPM = 3000.0f;
+    static constexpr float MAX_ROTATIONAL_SPEED_RPM = 4000.0f;
 
     tap::Drivers* drivers;
     ChassisSubsystem* chassis;
