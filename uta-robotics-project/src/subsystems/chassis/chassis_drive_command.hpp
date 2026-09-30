@@ -4,7 +4,6 @@
 #include "tap/communication/serial/remote.hpp"
 #include "tap/control/command.hpp"
 
-#include "chassis_field_relative_math.hpp"
 #include "chassis_subsystem.hpp"
 
 namespace tap
@@ -41,6 +40,7 @@ namespace control::chassis
  */
 class ChassisDriveCommand : public tap::control::Command
 {
+    
 public:
     ChassisDriveCommand(tap::Drivers* drivers, ChassisSubsystem* chassis);
 
@@ -53,6 +53,8 @@ public:
     bool isFinished() const override;
 
     const char* getName() const override { return "chassis drive"; }
+
+    
 
 private:
     /// Wheel RPM commanded when a translation stick is at full deflection.
@@ -67,6 +69,8 @@ private:
     /// Reads a remote stick channel, returning 0.0f (rather than stale or
     /// garbage data) if the remote link is down.
     float getChannel(tap::communication::serial::Remote::Channel channel) const;
+
+
 };
 
 }  // namespace control::chassis

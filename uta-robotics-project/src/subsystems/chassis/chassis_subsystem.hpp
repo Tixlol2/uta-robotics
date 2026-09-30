@@ -102,6 +102,13 @@ public:
      */
     void setDesiredOutput(float x, float y, float r);
 
+    void rotateFieldRelativeToChassisRelative(
+        float fieldX,
+        float fieldY,
+        float yawRadians,
+        float* chassisX,
+        float* chassisY);
+
     /**
      * Sets values for the desired chassis velocity, but does not run the kinematics.
      * Instead, values are directyl set via the controller's channels multiplied
@@ -126,6 +133,8 @@ public:
     modm::Matrix<float, 3, 1> getActualVelocityChassisRelative() const;
 
     const char* getName() const { return "X-Drive Chassis"; }
+
+    
 
 private:
     /// Builds the 3x4 wheel-velocity-to-chassis-velocity matrix from the

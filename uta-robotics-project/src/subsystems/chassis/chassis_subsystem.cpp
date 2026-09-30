@@ -157,4 +157,19 @@ modm::Matrix<float, 3, 1> ChassisSubsystem::getActualVelocityChassisRelative() c
     return wheelVelToChassisVelMat * wheelVel;
 }
 
+void ChassisSubsystem::rotateFieldRelativeToChassisRelative(
+    float fieldX,
+    float fieldY,
+    float yawRadians,
+    float* chassisX,
+    float* chassisY)
+{
+    // Standard 2D rotation by -yawRadians.
+    const float cosYaw = cosf(yawRadians);
+    const float sinYaw = sinf(yawRadians);
+
+    *chassisY = fieldX * cosYaw + fieldY * sinYaw;
+    *chassisX = -fieldX * sinYaw + fieldY * cosYaw;
+}
+
 }  // namespace control::chassis

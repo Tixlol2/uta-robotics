@@ -4,6 +4,10 @@
 
 namespace control::chassis
 {
+
+    float yaw;
+    float yawRadians;
+
 ChassisDriveCommand::ChassisDriveCommand(tap::Drivers* drivers, ChassisSubsystem* chassis)
     : drivers(drivers),
       chassis(chassis)
@@ -29,22 +33,23 @@ void ChassisDriveCommand::execute()
     // Raw stick input is interpreted as a *field*-relative direction: e.g.
     // "stick forward" should always drive the robot the same way across the
     // field, independent of the chassis's current heading.
-    const float fieldX = getChannel(tap::communication::serial::Remote::Channel::LEFT_VERTICAL) *
+    const float fieldX = -getChannel(tap::communication::serial::Remote::Channel::LEFT_HORIZONTAL) *
                           MAX_TRANSLATIONAL_SPEED_RPM;
     const float fieldY =
-        getChannel(tap::communication::serial::Remote::Channel::LEFT_HORIZONTAL) *
+        -getChannel(tap::communication::serial::Remote::Channel::LEFT_VERTICAL) *
         MAX_TRANSLATIONAL_SPEED_RPM;
     const float r = getChannel(tap::communication::serial::Remote::Channel::RIGHT_HORIZONTAL) *
                      MAX_ROTATIONAL_SPEED_RPM;
 
     // Current chassis heading relative to the field, in radians.
-    const float yaw = modm::toRadian(drivers->bmi088.getYaw());
+    yaw = drivers->bmi088.getYaw();
+    yawRadians = modm::toRadian(yaw);
 
     // Rotate the field-relative command into the chassis's own body frame
     // before handing it to the subsystem.
     float chassisX = 0.0f;
     float chassisY = 0.0f;
-    rotateFieldRelativeToChassisRelative(fieldX, fieldY, yaw, &chassisX, &chassisY);
+    chassis->rotateFieldRelativeToChassisRelative(fieldX, fieldY, yawRadians, &chassisX, &chassisY);
 
     chassis->setDesiredOutput(chassisX, chassisY, r);
 }

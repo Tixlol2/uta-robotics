@@ -43,7 +43,7 @@ void ChassisBeybladeCommand::execute()
     // frame before handing it to the subsystem.
     float chassisX = 0.0f;
     float chassisY = 0.0f;
-    rotateFieldRelativeToChassisRelative(fieldX, fieldY, yaw, &chassisX, &chassisY);
+    chassis->rotateFieldRelativeToChassisRelative(fieldX, fieldY, yaw, &chassisX, &chassisY);
 
     // Rotation is constant regardless of stick input -- that's the "beyblade" part.
     chassis->setDesiredOutput(chassisX, chassisY, BEYBLADE_ROTATION_RPM);

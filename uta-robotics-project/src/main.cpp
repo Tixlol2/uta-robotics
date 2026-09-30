@@ -209,7 +209,6 @@ static void initializeIo(src::Drivers *drivers)
     // ki compensates for drift over minutes, imu drifts -> start at 0.001, then increase as needed
     // drivers->mpu6500.init(MAIN_LOOP_FREQUENCY, 0.1, 0);
     drivers->bmi088.initialize(MAIN_LOOP_FREQUENCY, 0.1, 0);
-    
     drivers->bmi088.requestRecalibration();
     drivers->refSerial.initialize();
     drivers->terminalSerial.initialize();
@@ -226,7 +225,7 @@ static void updateIo(src::Drivers *drivers)
 #ifdef PLATFORM_HOSTED
     tap::motor::motorsim::DjiMotorSimHandler::getInstance()->updateSims();
 #endif
-
+    
     drivers->canRxHandler.pollCanData();
     drivers->refSerial.updateSerial();
     drivers->remote.read();
