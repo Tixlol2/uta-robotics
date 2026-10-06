@@ -10,6 +10,7 @@
 #include "tap/motor/motor_interface.hpp"
 
 // --- Control / math --------------------------------------------------------
+#include "tap/algorithms/ramp.hpp"
 #include "tap/algorithms/smooth_pid.hpp"
 #include "tap/architecture/clock.hpp"
 #include "modm/math/matrix.hpp"
@@ -77,7 +78,10 @@ public:
         tap::can::CanBus canBus,
         float wheelRadius,
         float wheelbaseRadius,
-        const tap::algorithms::SmoothPidConfig& velocityPidConfig);
+        const tap::algorithms::SmoothPidConfig& velocityPidConfig,
+        const float maxTranslationalAccel,
+        const float maxRotationalAccel
+    );
 
     /// Initializes all four chassis motors over CAN. Must be called once
     /// before the chassis will respond to setDesiredOutput().
@@ -150,6 +154,17 @@ private:
 
     std::array<tap::motor::DjiMotor, 4> motors;
     std::array<tap::algorithms::SmoothPid, 4> velocityPid;
+
+    tap::algorithms::Ramp rampController;
+
+    tap::algorithms::Ramp xRamp;
+    tap::algorithms::Ramp yRamp;
+    tap::algorithms::Ramp rRamp;
+
+    float maxTranslationalAccel;
+    float maxRotationalAccel;
+
+    uint32_t lastRampUpdateTimeMs = 0;
 
     /// 3x4 matrix mapping wheel velocities -> chassis velocity (forward
     /// kinematics). Used directly for getActualVelocityChassisRelative(),

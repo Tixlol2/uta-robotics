@@ -57,7 +57,7 @@ private:
     /// Wheel RPM commanded when a translation stick is at full deflection
     /// while beyblading. Kept lower than ChassisDriveCommand's translation
     /// authority so the chassis stays controllable while spinning.
-    static constexpr float BEYBLADE_TRANSLATIONAL_SPEED_RPM = 2000.0f;
+    static constexpr float BEYBLADE_TRANSLATIONAL_SPEED_RPM = 6000.0f;
 
     tap::Drivers* drivers;
     ChassisSubsystem* chassis;

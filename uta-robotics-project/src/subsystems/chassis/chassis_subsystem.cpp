@@ -25,7 +25,9 @@ ChassisSubsystem::ChassisSubsystem(
     tap::can::CanBus canBus,
     float wheelRadius,
     float wheelbaseRadius,
-    const tap::algorithms::SmoothPidConfig& velocityPidConfig)
+    const tap::algorithms::SmoothPidConfig& velocityPidConfig,
+    float maxTranslationalAccel,
+    float maxRotationalAccel)
 
     : tap::control::Subsystem(drivers),
       drivers(drivers),
@@ -42,7 +44,12 @@ ChassisSubsystem::ChassisSubsystem(
           tap::algorithms::SmoothPid(velocityPidConfig),
       },
       wheelVelToChassisVelMat(),
-      desiredWheelRpm()
+      desiredWheelRpm(),
+      xRamp(0.0f),
+      yRamp(0.0f),
+      rRamp(0.0f),
+      maxTranslationalAccel(maxTranslationalAccel),
+      maxRotationalAccel(maxRotationalAccel)
 {
     computeKinematics(wheelRadius, wheelbaseRadius);
     desiredWheelRpm = desiredWheelRpm.zeroMatrix();
@@ -95,10 +102,23 @@ void ChassisSubsystem::calculateDesiredWheelRpm(float x, float y, float r)
 
 void ChassisSubsystem::setDesiredOutput(float x, float y, float r)
 {
-    calculateDesiredWheelRpm(x, y, r);
+    // Only the ramps' *targets* move immediately; the ramps themselves are
+    // stepped forward in refresh(), at a bounded rate, regardless of how
+    // abruptly the caller's x/y/r changes here. This is what keeps a sudden
+    // stick snap or a beyblade toggle from demanding an instant speed/
+    // direction change that could tip the chassis.
+    xRamp.setTarget(x);
+    yRamp.setTarget(y);
+    rRamp.setTarget(r);
 }
 
-void ChassisSubsystem::setZeroRPM() { desiredWheelRpm = desiredWheelRpm.zeroMatrix(); }
+void ChassisSubsystem::setZeroRPM()
+{
+    // Ramp down to zero rather than snapping -- an instant stop from a high
+    // speed or spin rate is exactly the kind of abrupt deceleration that can
+    // tip the chassis, same as an abrupt start.
+    setDesiredOutput(0.0f, 0.0f, 0.0f);
+}
 
 void ChassisSubsystem::refresh()
 {
@@ -106,8 +126,22 @@ void ChassisSubsystem::refresh()
     const float dt = static_cast<float>(now - lastUpdateTimeMs) / 1000.0f;
     lastUpdateTimeMs = now;
 
-    drivers->leds.set(drivers->leds.Green, !allMotorsOnline() && !drivers->remote.getChannel(tap::communication::serial::Remote::Channel::LEFT_VERTICAL) < 0.1f);
-    
+    drivers->leds.set(
+        drivers->leds.Green,
+        !allMotorsOnline() &&
+            !drivers->remote.getChannel(tap::communication::serial::Remote::Channel::LEFT_VERTICAL) <
+                0.1f);
+
+    // Advance each ramp toward its target by at most (accel limit * dt),
+    // then recompute the wheel RPMs from the ramped (not raw) x/y/r. This
+    // runs every tick regardless of whether setDesiredOutput() was just
+    // called, since a ramp in progress still needs to keep moving toward
+    // its target.
+    xRamp.update(maxTranslationalAccel * dt);
+    yRamp.update(maxTranslationalAccel * dt);
+    rRamp.update(maxRotationalAccel * dt);
+
+    calculateDesiredWheelRpm(xRamp.getValue(), yRamp.getValue(), rRamp.getValue());
 
     for (int i = 0; i < getNumChassisMotors(); i++)
     {

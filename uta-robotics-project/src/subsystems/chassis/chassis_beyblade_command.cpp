@@ -30,20 +30,20 @@ void ChassisBeybladeCommand::execute()
     // Raw stick input is interpreted as a *field*-relative direction: e.g.
     // "stick forward" should always drive the robot the same way across the
     // field, independent of which way the spinning chassis currently faces.
-    const float fieldX = getChannel(tap::communication::serial::Remote::Channel::LEFT_VERTICAL) *
+    const float fieldX = -getChannel(tap::communication::serial::Remote::Channel::LEFT_HORIZONTAL) *
                           BEYBLADE_TRANSLATIONAL_SPEED_RPM;
     const float fieldY =
-        getChannel(tap::communication::serial::Remote::Channel::LEFT_HORIZONTAL) *
+        -getChannel(tap::communication::serial::Remote::Channel::LEFT_VERTICAL) *
         BEYBLADE_TRANSLATIONAL_SPEED_RPM;
 
-    // Current chassis heading relative to the field, in radians.
+    // Current chassis heading relative to the field, in degrees.
     const float yaw = drivers->bmi088.getYaw();
 
     // Rotate the field-relative command into the chassis's spinning body
     // frame before handing it to the subsystem.
     float chassisX = 0.0f;
     float chassisY = 0.0f;
-    chassis->rotateFieldRelativeToChassisRelative(fieldX, fieldY, yaw, &chassisX, &chassisY);
+    chassis->rotateFieldRelativeToChassisRelative(fieldX, fieldY, modm::toRadian(yaw), &chassisX, &chassisY);
 
     // Rotation is constant regardless of stick input -- that's the "beyblade" part.
     chassis->setDesiredOutput(chassisX, chassisY, BEYBLADE_ROTATION_RPM);

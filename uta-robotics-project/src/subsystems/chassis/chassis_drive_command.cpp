@@ -41,15 +41,15 @@ void ChassisDriveCommand::execute()
     const float r = getChannel(tap::communication::serial::Remote::Channel::RIGHT_HORIZONTAL) *
                      MAX_ROTATIONAL_SPEED_RPM;
 
-    // Current chassis heading relative to the field, in radians.
+    // Current chassis heading relative to the field, in degrees.
     yaw = drivers->bmi088.getYaw();
-    yawRadians = modm::toRadian(yaw);
+    
 
     // Rotate the field-relative command into the chassis's own body frame
     // before handing it to the subsystem.
     float chassisX = 0.0f;
     float chassisY = 0.0f;
-    chassis->rotateFieldRelativeToChassisRelative(fieldX, fieldY, yawRadians, &chassisX, &chassisY);
+    chassis->rotateFieldRelativeToChassisRelative(fieldX, fieldY, modm::toRadian(yaw), &chassisX, &chassisY);
 
     chassis->setDesiredOutput(chassisX, chassisY, r);
 }
